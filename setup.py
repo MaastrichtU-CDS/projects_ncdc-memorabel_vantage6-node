@@ -24,12 +24,12 @@ with open(version_path) as f:
 
 # setup the package
 setup(
-    name='vantage6-node',
+    name='vantage6-node-memorabel',
     version=version_ns['__version__'],
-    description='vantage6 node',
+    description='vantage6 node forked for memorabel',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/IKNL/vantage6-node',
+    url='https://github.com/pedro-cmat/vantage6-node',
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[
@@ -42,7 +42,7 @@ setup(
         'termcolor==1.1.0',
         'bcrypt==3.1.7',
         'vantage6 >= 1.2.3',
-        'vantage6-client >= 1.2.3',
+        'vantage6-client >= 1.2.3'
     ],
     extras_require={
         'dev': [

@@ -14,8 +14,9 @@ import requests
 import os
 import logging
 import json
+from urllib.parse import urlparse
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort, Response
 
 from vantage6.node.util import (
     logger_name,
@@ -206,14 +207,14 @@ def proxy_results(id):
 
     return jsonify(response.json())
 
-@app.route('/<path:central_server_path>', methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
-def proxy(central_server_path):
-    """ Generic endpoint that will forward everything to the central server.
+@app.route('/<path:endpoint>', methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
+def proxy(endpoint):
+    """ Generic endpoint that will forward requests from whitelisted domains
+        or intended for the central server.
 
-        :param central_server_path: the endpoint path to call
+        :param endpoint: the endpoint to call
     """
-    log.info(f'Generic proxy request for {central_server_path}')
-    url = server_info()
+    log.info(f'Generic proxy request for {endpoint}')
 
     method_name = request.method.lower()
     method = {
@@ -223,6 +224,20 @@ def proxy(central_server_path):
         "put": requests.put,
         "delete": requests.delete
     }.get(method_name, requests.get)
+
+    endpoint_parsed = urlparse(endpoint)
+    is_central_server_request = not (endpoint_parsed.scheme and endpoint_parsed.netloc)
+
+    if is_central_server_request:
+        url = f"{server_info()}/{endpoint}"
+    else:
+        url = endpoint
+        whitelist = os.getenv("WHITELIST").split(" ") if os.getenv("WHITELIST") else []
+        if endpoint_parsed.netloc not in whitelist:
+            log.info(f"Resquest to {endpoint} not allowed.")
+            abort(403)
+
+    log.debug(f'{method_name} request for {url}')
 
     # auth = None
     # if "Authorization" in request.headers:
@@ -234,15 +249,9 @@ def proxy(central_server_path):
         auth = None
         auth_found = False
 
-    # log.debug(f"method = {method_name}, auth = {auth_found}")
-
-    api_url = f"{url}/{central_server_path}"
-    # print("*************")
-    # print(api_url)
-    # log.info(f"{method_name} | {api_url}")
     try:
         response = method(
-            api_url,
+            url,
             json=request.get_json(),
             params=request.args,
             headers={'Authorization': auth}
@@ -253,8 +262,13 @@ def proxy(central_server_path):
         log.debug(e)
         return
 
-    if response.status_code > 200:
-        log.error(f"server response code {response.status_code}")
-        log.debug(response.json().get("msg","no description..."))
+    if is_central_server_request:
+        if response.status_code > 200:
+            log.error(f"server response code {response.status_code}")
+            log.debug(response.json().get("msg","no description..."))
 
-    return jsonify(response.json())
+        return jsonify(response.json())
+    else:
+        excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+        headers = [(name, value) for (name, value) in response.raw.headers.items() if name.lower() not in excluded_headers]
+        return Response(response.content, response.status_code, headers)
