@@ -232,8 +232,8 @@ def proxy(endpoint):
         url = f"{server_info()}/{endpoint}"
     else:
         url = endpoint
-        whitelist = os.getenv("WHITELIST").split(" ") if os.getenv("WHITELIST") else []
-        if endpoint_parsed.netloc not in whitelist:
+        whitelist = os.getenv("WHITELIST").split(" ")
+        if endpoint_parsed.netloc not in os.getenv("WHITELIST"):
             log.info(f"Resquest to {endpoint} not allowed.")
             abort(403)
 

@@ -241,6 +241,9 @@ class Node(object):
         # Let's keep it safe
         self.__docker.set_database_uri(database_uri)
 
+        # Set the whitelist as an environment variable
+        os.environ["WHITELIST"] = self.config.get("whitelist", "")
+
         # Load additional environment vars for the algorithms. This is
         # for example usefull when a password is needed for the database
         self.__docker.algorithm_env = self.config.get('algorithm_env', {})
