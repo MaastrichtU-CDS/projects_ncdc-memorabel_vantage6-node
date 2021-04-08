@@ -241,9 +241,6 @@ class Node(object):
         # Let's keep it safe
         self.__docker.set_database_uri(database_uri)
 
-        # Set the whitelist as an environment variable
-        os.environ["WHITELIST"] = self.config.get("whitelist", "")
-
         # Load additional environment vars for the algorithms. This is
         # for example usefull when a password is needed for the database
         self.__docker.algorithm_env = self.config.get('algorithm_env', {})
@@ -293,6 +290,9 @@ class Node(object):
         # 'app' is defined in vantage6.node.proxy_server
         # app.debug = True
         app.config["SERVER_IO"] = self.server_io
+
+        # Set the whitelist as an environment variable
+        app.config["WHITELIST"] = self.config.get("whitelist", [])
 
         for try_number in range(5):
             self.log.info(

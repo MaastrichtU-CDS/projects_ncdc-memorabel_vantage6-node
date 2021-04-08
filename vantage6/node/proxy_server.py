@@ -31,6 +31,7 @@ from vantage6.client.encryption import CryptorBase, DummyCryptor, RSACryptor
 app = Flask(__name__)
 log = logging.getLogger(logger_name(__name__))
 app.config["SERVER_IO"] = None
+app.config["WHITELIST"] = []
 
 def server_info():
     """ Retrieve proxy server details environment variables set by the
@@ -232,8 +233,7 @@ def proxy(endpoint):
         url = f"{server_info()}/{endpoint}"
     else:
         url = endpoint
-        whitelist = os.getenv("WHITELIST").split(" ")
-        if endpoint_parsed.netloc not in os.getenv("WHITELIST"):
+        if endpoint_parsed.netloc not in app.config["WHITELIST"]:
             log.info(f"Resquest to {endpoint} not allowed.")
             abort(403)
 
