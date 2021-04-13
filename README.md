@@ -18,6 +18,7 @@
   <a href="#books-documentation">Documentation</a> •
   <a href="#cd-installation">Installation</a> •
   <a href="#hatching_chick-how-to-use">How To Use</a> •
+   <a href="#vertical_traffic_light-whitelisting">Whitelisting</a> •
   <a href="#gift_heart-contributing">Contributing</a> •
   <a href="#black_nib-references">References</a>
 </p>
@@ -76,6 +77,27 @@ vnode stop [OPTIONS]
 vnode attach [OPTIONS]
 
 ```
+
+## :vertical_traffic_light: Whitelisting
+
+The node configuration file should contain an entry for the whitelisted domains:
+```
+  server_url: http://vantage6_server
+  task_dir: tasks
+  algorithm_env:
+  whitelist:
+      - central.xnat.org
+      - google.com
+      - ...
+```
+
+The XNAT host should be provided in the following way: `<proxy_server>/<host>`
+Example using xnatpy to get a connection to an XNAT open server:
+
+`session = xnat.connect(f'{os.getenv("HOST")}:{os.getenv("PORT")}/https://central.xnat.org')`
+
+The host will only be recognizable if provided with the protocol (`https://<host>`).
+
 ## :gift_heart: Contributing
 We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines](https://docs.vantage6.ai/how-to-contribute/how-to-contribute)
 
