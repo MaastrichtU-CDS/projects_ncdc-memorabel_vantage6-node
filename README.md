@@ -80,7 +80,9 @@ vnode attach [OPTIONS]
 
 ## :vertical_traffic_light: Whitelisting
 
-The node configuration file should contain an entry for the whitelisted domains:
+The algorithm container runs in an isolated network, thus preventing any connection to an external endpoint.
+However, it is possible to whitelist certain domains, allowing API calls.
+To accomplish this, the node configuration file should contain an entry for the whitelisted domains:
 ```
   server_url: http://vantage6_server
   task_dir: tasks
@@ -91,12 +93,14 @@ The node configuration file should contain an entry for the whitelisted domains:
       - ...
 ```
 
-The XNAT host should be provided in the following way: `<proxy_server>/<host>`
+The request in the algorithm should build the endpoint in the following way: `<proxy_server>/<host>`
 Example using xnatpy to get a connection to an XNAT open server:
 
 `session = xnat.connect(f'{os.getenv("HOST")}:{os.getenv("PORT")}/https://central.xnat.org')`
 
 The host will only be recognizable if provided with the protocol (`https://<host>`).
+
+A docker image is available in the following repository: `pmateus/vantage6-node-whitelisted`.
 
 ## :gift_heart: Contributing
 We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines](https://docs.vantage6.ai/how-to-contribute/how-to-contribute)
