@@ -18,7 +18,8 @@ import re
 from typing import NamedTuple
 
 from vantage6.common.docker_addons import pull_if_newer
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, DEFAULT_GPU_IMAGE_PLACEHOLDER, \
+    DEFAULT_GPU_IMAGE_KEY
 from vantage6.node.util import logger_name
 
 
@@ -72,6 +73,7 @@ class DockerManager(object):
         # can attach
         self.network_name = isolated_network_name
         self._isolated_network = self._create_network()
+        self._open_network = self._create_network(internal=False, suffix='-open')
 
         # node name is used to identify algorithm containers belonging
         # to this node. This is required as multiple nodes may run at
@@ -112,14 +114,14 @@ class DockerManager(object):
 
         return task_dir
 
-    def _create_network(self) -> docker.models.networks.Network:
+    def _create_network(self, internal=True, suffix='') -> docker.models.networks.Network:
         """ Creates an internal (docker) network
 
             Used by algorithm containers to communicate with the node API.
 
             :param name: name of the internal network
         """
-        name = self.network_name
+        name = f'{self.network_name}{suffix}'
 
         try:
             network = self.docker.networks.get(name)
@@ -130,7 +132,7 @@ class DockerManager(object):
 
         self.log.debug(f"Creating isolated docker-network {name}!")
 
-        internal_ = self.running_in_docker()
+        internal_ = self.running_in_docker() and internal
         if not internal_:
             self.log.warn(
                 "Algorithms have internet connection! "
@@ -153,6 +155,7 @@ class DockerManager(object):
 
         # If the network already exists, this is a no-op.
         self._isolated_network.connect(container_name, aliases=aliases)
+        self._open_network.connect(container_name, aliases=aliases)
 
     def create_volume(self, volume_name: str):
         """Create a temporary volume for a single run.
@@ -249,7 +252,11 @@ class DockerManager(object):
             return False
 
         # Try to pull the latest image
-        self.pull(image)
+        defaultimage = image == DEFAULT_GPU_IMAGE_PLACEHOLDER
+        if defaultimage and os.getenv(DEFAULT_GPU_IMAGE_KEY):
+            self.pull(os.getenv(DEFAULT_GPU_IMAGE_KEY))
+        else:
+            self.pull(image)
 
         # FIXME: We should have a seperate mount/volume for this. At the
         #   moment this is a potential leak as containers might access input,
@@ -347,7 +354,8 @@ class DockerManager(object):
                 image,
                 detach=True,
                 environment=environment_variables,
-                network=self._isolated_network.name,
+                network=self._open_network.name if defaultimage \
+                    else self._isolated_network.name,
                 volumes=volumes,
                 labels={
                     f"{APPNAME}-type": "algorithm",
