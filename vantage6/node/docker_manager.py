@@ -18,8 +18,7 @@ import re
 from typing import NamedTuple
 
 from vantage6.common.docker_addons import pull_if_newer
-from vantage6.common.globals import APPNAME, DEFAULT_GPU_IMAGE_PLACEHOLDER, \
-    DEFAULT_GPU_IMAGE_KEY
+from vantage6.common.globals import APPNAME
 from vantage6.node.util import logger_name
 
 
@@ -58,6 +57,7 @@ class DockerManager(object):
         self.database_is_file = False
         self.__tasks_dir = tasks_dir
         self.algorithm_env = {}
+        self.docker_images_placeholders = {}
 
         # Connect to docker daemon
         # self.docker = docker.DockerClient(base_url=docker_socket_path)
@@ -189,6 +189,10 @@ class DockerManager(object):
             self.log.warn("All docker images are allowed on this Node!")
             return True
 
+        # check if it's a placeholder
+        if docker_image_name in self.docker_images_placeholders.keys():
+            return True
+
         # check if it matches any of the regex cases
         for regex_expr in self._allowed_images:
             expr_ = re.compile(regex_expr)
@@ -252,9 +256,10 @@ class DockerManager(object):
             return False
 
         # Try to pull the latest image
-        defaultimage = image == DEFAULT_GPU_IMAGE_PLACEHOLDER
-        if defaultimage and os.getenv(DEFAULT_GPU_IMAGE_KEY):
-            self.pull(os.getenv(DEFAULT_GPU_IMAGE_KEY))
+        image_from_placeholder = self.docker_images_placeholders.get(image)
+        if image_from_placeholder:
+            self.log.debug(f"Retrieving image {image_from_placeholder} for placeholder {image}")
+            self.pull(image_from_placeholder)
         else:
             self.pull(image)
 
@@ -351,10 +356,10 @@ class DockerManager(object):
         try:
             self.log.info(f"Run docker image={image}")
             container = self.docker.containers.run(
-                image,
+                image_from_placeholder or image,
                 detach=True,
                 environment=environment_variables,
-                network=self._open_network.name if defaultimage \
+                network=self._open_network.name if image_from_placeholder \
                     else self._isolated_network.name,
                 volumes=volumes,
                 labels={

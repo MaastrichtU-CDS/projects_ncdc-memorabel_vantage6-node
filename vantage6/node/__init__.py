@@ -245,6 +245,9 @@ class Node(object):
         # for example usefull when a password is needed for the database
         self.__docker.algorithm_env = self.config.get('algorithm_env', {})
 
+        # Set the map between docker images and placeholders as an environment variable
+        self.__docker.docker_images_placeholders = self.config.get('docker_images_placeholders', {})
+
         # Thread for sending results to the server when they come available.
         self.log.debug("Start thread for sending messages (results)")
         t = Thread(target=self.__speaking_worker, daemon=True)
@@ -292,7 +295,7 @@ class Node(object):
         app.config["SERVER_IO"] = self.server_io
 
         # Set the whitelist as an environment variable
-        app.config["WHITELIST"] = self.config.get("whitelist", [])
+        app.config[cs.WHITELIST] = self.config.get("whitelist", [])
 
         for try_number in range(5):
             self.log.info(
