@@ -101,7 +101,7 @@ Example using xnatpy to get a connection to an XNAT open server:
 
 The host will only be recognizable if provided with the protocol (`https://<host>`).
 
-A docker image is available in the following repository: `pmateus/vantage6-node-whitelisted`.
+A docker image is available in the following repository: `pmateus/vantage6-node-whitelisted:1.0.0`.
 
 ## :card_index: Node Images
 
@@ -139,6 +139,8 @@ task = client.post_task(
 )
 ```
 Each cluster will run it's own docker image for the chosen placeholder which will deploy the algorithm container (in the example, the `user/deep-neural-network`) in the right environment (e.g. the GPU cluster).
+
+A docker image is available in the following repository: `pmateus/vantage6-node-whitelisted:2.0.0`.
 
 ## :gift_heart: Contributing
 We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines](https://docs.vantage6.ai/how-to-contribute/how-to-contribute)
