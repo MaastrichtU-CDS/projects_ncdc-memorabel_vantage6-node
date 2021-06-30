@@ -18,7 +18,8 @@
   <a href="#books-documentation">Documentation</a> •
   <a href="#cd-installation">Installation</a> •
   <a href="#hatching_chick-how-to-use">How To Use</a> •
-   <a href="#vertical_traffic_light-whitelisting">Whitelisting</a> •
+  <a href="#vertical_traffic_light-whitelisting">Whitelisting</a> •
+  <a href="#card_index-whitelisting">Node Images</a> •
   <a href="#gift_heart-contributing">Contributing</a> •
   <a href="#black_nib-references">References</a>
 </p>
@@ -101,6 +102,43 @@ Example using xnatpy to get a connection to an XNAT open server:
 The host will only be recognizable if provided with the protocol (`https://<host>`).
 
 A docker image is available in the following repository: `pmateus/vantage6-node-whitelisted`.
+
+## :card_index: Node Images
+
+Some algorithms may require more computation power than what's provided by the machine running the node (e.g. be prone to run in a GPU cluster).
+In those cases, specific images can be used at each node to run the necessary commands and deploy the algorithm in the chosen environment.
+To accomplish this, the node configuration file should contain an entry for the docker image placeholders:
+```
+  server_url: http://vantage6_server
+  task_dir: tasks
+  algorithm_env:
+  whitelist:
+    ...
+  docker_images_placeholders:
+    gpu_image: docker-image-name
+    placeholder-2: docker-image-name-2
+    ...
+```
+
+When sending the request for a task, the placeholder should be used and the algorithm image provided as input:
+```python
+input_ = {
+    "master": "true",
+    "method":"master",
+    "args": [],
+    "kwargs": {
+        "algorithm_image": "user/deep-neural-network",
+    }
+}
+
+task = client.post_task(
+    name="Run algorithm in a GPU cluster at each node",
+    image="gpu_image",
+    collaboration_id=1,
+    input_= input_
+)
+```
+Each cluster will run it's own docker image for the chosen placeholder which will deploy the algorithm container (in the example, the `user/deep-neural-network`) in the right environment (e.g. the GPU cluster).
 
 ## :gift_heart: Contributing
 We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines](https://docs.vantage6.ai/how-to-contribute/how-to-contribute)
