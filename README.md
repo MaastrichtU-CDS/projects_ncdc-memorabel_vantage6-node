@@ -19,7 +19,7 @@
   <a href="#cd-installation">Installation</a> •
   <a href="#hatching_chick-how-to-use">How To Use</a> •
   <a href="#vertical_traffic_light-whitelisting">Whitelisting</a> •
-  <a href="#card_index-whitelisting">Node Images</a> •
+  <a href="#card_index-node-images">Node Images</a> •
   <a href="#gift_heart-contributing">Contributing</a> •
   <a href="#black_nib-references">References</a>
 </p>
