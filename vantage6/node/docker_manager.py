@@ -143,7 +143,8 @@ class DockerManager(object):
             name,
             driver="bridge",
             internal=internal_,
-            scope="local"
+            scope="swarm",
+            attachable=True
         )
 
         return network
@@ -302,16 +303,19 @@ class DockerManager(object):
         tmp_folder = "/mnt/tmp"
         data_folder = "/mnt/data"
 
-        volumes = {
-            tmp_vol_name: {"bind": tmp_folder, "mode": "rw"},
-        }
+        # volumes = {
+        #     tmp_vol_name: {"bind": tmp_folder, "mode": "rw"},
+        # }
+        mounts = [f'{tmp_vol_name}:{tmp_folder}:rw']
 
         if self.running_in_docker():
-            volumes[self.data_volume_name] = \
-                {"bind": data_folder, "mode": "rw"}
+            mounts.append(f'{self.data_volume_name}:{data_folder}:rw')
+            # volumes[self.data_volume_name] = \
+            #     {"bind": data_folder, "mode": "rw"}
 
         else:
-            volumes[self.__tasks_dir] = {"bind": data_folder, "mode": "rw"}
+            mounts.append(f'{self.__tasks_dir}:{data_folder}:rw')
+            # volumes[self.__tasks_dir] = {"bind": data_folder, "mode": "rw"}
 
         try:
             proxy_host = os.environ['PROXY_SERVER_HOST']
@@ -350,23 +354,40 @@ class DockerManager(object):
             self.log.info('Custom environment variables are loaded!')
             self.log.debug(f"custom environment: {self.algorithm_env}")
 
-        self.log.debug(f"volumes: {volumes}")
+        #self.log.debug(f"volumes: {volumes}")
+        self.log.debug(f"volumes: {mounts}")
 
         # attempt to run the image
         try:
             self.log.info(f"Run docker image={image}")
-            container = self.docker.containers.run(
+            # container = self.docker.containers.run(
+            #     image_from_placeholder or image,
+            #     detach=True,
+            #     environment=environment_variables,
+            #     network=self._open_network.name if image_from_placeholder \
+            #         else self._isolated_network.name,
+            #     volumes=volumes,
+            #     labels={
+            #         f"{APPNAME}-type": "algorithm",
+            #         "node": self.node_name,
+            #         "result_id": str(result_id)
+            #     }
+            # )
+            container = self.docker.services.create(
                 image_from_placeholder or image,
-                detach=True,
-                environment=environment_variables,
-                network=self._open_network.name if image_from_placeholder \
-                    else self._isolated_network.name,
-                volumes=volumes,
+                env=environment_variables,
+                networks=[
+                    self._open_network.name if image_from_placeholder \
+                        else self._isolated_network.name
+                ],
+                mounts=mounts,
+                # log_driver="json-file",
                 labels={
                     f"{APPNAME}-type": "algorithm",
                     "node": self.node_name,
                     "result_id": str(result_id)
-                }
+                },
+                #secrets=
             )
         except Exception as e:
             self.log.error('Could not run docker image!?')
@@ -381,6 +402,13 @@ class DockerManager(object):
         })
 
         return True
+
+    def is_task_completed(self, service):
+        """ Check if the service task has finished.
+        """
+        tasks = service.tasks()
+        return len(tasks) > 0 and "Status" in tasks[0] and "ContainerStatus" in \
+            tasks[0]["Status"] and "ExitCode" in tasks[0]["Status"]["ContainerStatus"]
 
     def get_result(self):
         """ Returns the oldest (FIFO) finished docker container.
@@ -398,7 +426,7 @@ class DockerManager(object):
             self.__refresh_container_statuses()
 
             finished_tasks = [t for t in self.active_tasks
-                              if t['container'].status == 'exited']
+                               if self.is_task_completed(t['container'])]
 
             time.sleep(1)
 
@@ -411,14 +439,16 @@ class DockerManager(object):
 
         # get all info from the container and cleanup
         container = finished_task["container"]
-        log = container.logs().decode('utf8')
+        service_task = container.tasks()[0]
 
-        # report if the container has a different status than 0
-        status_code = container.attrs["State"]["ExitCode"]
+        log = self.docker.containers.get(service_task["Status"]["ContainerStatus"]["ContainerID"]).logs().decode('utf8')
+        
+        status_code = service_task["Status"]["ContainerStatus"]["ExitCode"]
 
         if status_code:
             self.log.error(f"Received non-zero exitcode: {status_code}")
-            self.log.error(f"  Container id: {container.id}")
+            self.log.error(f"  Service id: {container.id}")
+            self.log.error(f"  Container id: {service_task['ID']}")
             self.log.warn("Will not remove container")
             self.log.info(log)
 
