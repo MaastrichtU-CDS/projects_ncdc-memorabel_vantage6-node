@@ -328,6 +328,7 @@ class DockerManager(object):
         # FIXME: we should only prepend data_folder if database_uri is a
         #   filename
         environment_variables = {
+            "TASK_FOLDER": f"{data_folder}/{task_folder_name}",
             "INPUT_FILE": f"{data_folder}/{task_folder_name}/input",
             "OUTPUT_FILE": f"{data_folder}/{task_folder_name}/output",
             "TOKEN_FILE": f"{data_folder}/{task_folder_name}/token",
