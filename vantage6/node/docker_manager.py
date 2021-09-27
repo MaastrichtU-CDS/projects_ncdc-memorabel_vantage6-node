@@ -130,7 +130,7 @@ class DockerManager(object):
         except Exception:
             self.log.debug("No network found...")
 
-        self.log.debug(f"Creating isolated docker-network {name}!")
+        self.log.debug(f"Creating open docker-network {name}!")
 
         internal_ = self.running_in_docker() and internal
         if not internal_:
