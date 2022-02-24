@@ -425,6 +425,8 @@ class DockerManager(object):
 
         else:
             try:
+                self.log.error("No exit code provided! The container will be removed.")
+                self.log.info(log)
                 container.remove()
 
             except Exception as e:
