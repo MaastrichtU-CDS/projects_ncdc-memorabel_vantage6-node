@@ -1,8 +1,5 @@
 FROM harbor.vantage6.ai/infrastructure/base
 
-#COPY requirements.txt ./
-#RUN pip install --no-cache-dir -r requirements.txt
-
 WORKDIR /usr/app
 
 COPY . .
@@ -10,12 +7,9 @@ COPY . .
 RUN pip install -e .
 #RUN [ "python", "setup.py", "install" ]
 
-
-
-
 # LABEL version="1.0"
 # LABEL infrastructure_version = "1.2.3"
-# LABEL maintainer="Frank Martin <f.martin@iknl.nl>, Melle Sieswerda <m.sieswerda@iknl.nl>"
+# LABEL maintainer="Mantainer <mantainer@site.nl>"
 
 # COPY . /vantage6
 # RUN pip install -e /vantage6/vantage6-common

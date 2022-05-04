@@ -23,10 +23,10 @@ docker-build:
   script:
     - |
       if [[ "$CI_COMMIT_BRANCH" == "feature/whitelisting-v2.0.0" ]]; then
-        tag=":2.0.0"
+        tag="ncdc-v6-node:2.0.0"
         echo "Running on default branch 'feature/whitelisting-v2.0.0': tag = $tag"
       elif [[ "$CI_COMMIT_BRANCH" == "feature/whitelisting-v2.0.1" ]]; then
-        tag=":2.0.1"
+        tag="ncdc-v6-node:2.0.1"
         echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
       fi
     - docker build --pull -t "$CI_REGISTRY_IMAGE${tag}" .
