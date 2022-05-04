@@ -22,14 +22,18 @@ docker-build:
   # All other branches are tagged with the escaped branch name (commit ref slug)
   script:
     - |
-      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-        tag=""
-        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = '2.0.0'"
+      if [[ "$CI_COMMIT_BRANCH" == "feature/whitelisting-v2.0.0" ]]; then
+        tag=":2.0.0"
+        echo "Running on default branch 'feature/whitelisting-v2.0.0': tag = $tag"
+      elif [[ "$CI_COMMIT_BRANCH" == "feature/whitelisting-v2.0.1" ]]; then
+        tag=":2.0.1"
+        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
       fi
     - docker build --pull -t "$CI_REGISTRY_IMAGE${tag}" .
     - docker push "$CI_REGISTRY_IMAGE${tag}"
   # Run this job in a branch where a Dockerfile exists
   rules:
+    - if: $CI_COMMIT_BRANCH == "feature/whitelisting-v2.0.0" || $CI_COMMIT_BRANCH == "feature/whitelisting-v2.0.1"
     - if: $CI_COMMIT_BRANCH
       exists:
         - Dockerfile
